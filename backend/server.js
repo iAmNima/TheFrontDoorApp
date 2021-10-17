@@ -21,8 +21,10 @@ app.use(cors());
 app.use(express.json());
 
 const reservationsRouter = require("./routes/reservations");
+const refreshReservationsRouter = require("./routes/refresh-reservation");
 
 app.use("/reservations", reservationsRouter);
+app.use("/reservations", refreshReservationsRouter);
 
 //listening on the port:
 app.listen(port, () => {
