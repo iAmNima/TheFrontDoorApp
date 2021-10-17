@@ -1,16 +1,16 @@
-import logo from "./logo.svg";
 import "./App.css";
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, {useEffect, useState} from "react";
+import {motion} from "framer-motion";
 import profile_pic from "./assets/default_profile.png";
 import axios from "axios";
+
+const refreshReservation = new EventSource('http://localhost:5001/reservations/refresh');
 
 const App = () => {
   //Hooks:
   const [day, setDay] = useState("");
   const [reservations, setReservation] = useState([]);
 
-  //useEffects:
   useEffect(() => {
     let time = new Date();
     setDay(time.toLocaleDateString());
@@ -31,7 +31,7 @@ const App = () => {
   function setAvailabilities(reservations) {
     let temp = [];
     reservations.forEach((reservation) => {
-      if (reservation.day === day && reservation.roomNr == 1) {
+      if (reservation.day === day && reservation.roomNr === 1) {
         temp.push(reservation);
       }
     });
@@ -44,8 +44,8 @@ const App = () => {
   function formatAvailabilities(availabilities) {
     availabilities.forEach((reservation) => {
       availabilities.forEach((r2) => {
-        if (r2 != reservation) {
-          if (reservation.name == r2.name) {
+        if (r2 !== reservation) {
+          if (reservation.name === r2.name) {
             let index_r2 = availabilities.indexOf(r2);
             reservation.timeSlot += " | " + r2.timeSlot;
             availabilities.splice(index_r2, 1);
@@ -55,6 +55,12 @@ const App = () => {
     });
     return availabilities;
   }
+
+  useEffect(() => {
+    refreshReservation.onmessage = (event) => {
+      setReservation(formatAvailabilities(setAvailabilities([JSON.parse(event.data), ...reservations])));
+    };
+  }, [reservations]);
 
   return (
     <div className="mt-5">
