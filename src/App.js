@@ -6,10 +6,13 @@ import axios from "axios";
 
 const refreshReservation = new EventSource('http://localhost:5001/reservations/refresh');
 
+
 const App = () => {
   //Hooks:
   const [day, setDay] = useState("");
   const [reservations, setReservation] = useState([]);
+  const [disable, setDisable] = React.useState(false);
+
 
   useEffect(() => {
     let time = new Date();
@@ -19,9 +22,6 @@ const App = () => {
       .get("http://localhost:5001/reservations/")
       .then((Response) => {
         setReservation(formatAvailabilities(setAvailabilities(Response.data)));
-        //setReservation(setAvailabilities(Response.data));
-        //setReservation(Response.data);
-        console.log("hi");
       })
       .catch((error) => {
         console.log(error);
@@ -29,13 +29,28 @@ const App = () => {
   }, [day]);
 
   function setAvailabilities(reservations) {
-    let temp = [];
-    reservations.forEach((reservation) => {
-      if (reservation.day === day && reservation.roomNr === 1) {
-        temp.push(reservation);
-      }
-    });
-    return temp;
+    return reservations.filter(reservation => reservation.day === day);
+  }
+
+  function notify(email, roomNr) {
+    setDisable(true);
+    let mailTo = {
+      to: email,
+      roomNr,
+    };
+    console.log(mailTo);
+    axios
+      .post("http://localhost:5001/emails/send-email", mailTo)
+      .then((res) => {
+        console.log(res);
+        console.log("Message Sent");
+        setTimeout(() => setDisable(false), 5000);
+        alert("Message Sent");
+      })
+      .catch(() => {
+        console.log("Email could not be sent");
+        alert("Email could not be sent");
+      });
   }
 
   console.log(reservations);
@@ -70,16 +85,19 @@ const App = () => {
           <motion.div
             key={reservation._id}
             className="reservation-card p-3 mx-auto shadow"
-            initial={{ x: "100vw" }}
-            animate={{ x: 0 }}
-            transition={{ type: "spring", stiffness: 50 }}
+            initial={{x: "100vw"}}
+            animate={{x: 0}}
+            transition={{type: "spring", stiffness: 50}}
           >
             <div className="d-flex m-2">
-              <img className="default_profile_pic" src={profile_pic} />
+              <img className="default_profile_pic" src={profile_pic}/>
               <h3 className="my-auto ml-2">{reservation.name}</h3>
             </div>
             <div className="d-flex m-2">
               <h4 className="mr-auto">{reservation.timeSlot}</h4>
+            </div>
+            <div className="d-flex m-2">
+              <button disabled={disable} onClick={() => notify(reservation.email, reservation.roomNr)}>Notify ?</button>
             </div>
           </motion.div>
         );
