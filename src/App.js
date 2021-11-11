@@ -1,18 +1,18 @@
 import "./App.css";
-import React, {useEffect, useState} from "react";
-import {motion} from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import profile_pic from "./assets/default_profile.png";
 import axios from "axios";
 
-const refreshReservation = new EventSource('http://localhost:5001/reservations/refresh');
-
+const refreshReservation = new EventSource(
+  "http://localhost:5001/reservations/refresh"
+);
 
 const App = () => {
   //Hooks:
   const [day, setDay] = useState("");
   const [reservations, setReservation] = useState([]);
   const [disable, setDisable] = React.useState(false);
-
 
   useEffect(() => {
     let time = new Date();
@@ -28,8 +28,9 @@ const App = () => {
       });
   }, [day]);
 
+  // returns only the availabilities from all reservations.
   function setAvailabilities(reservations) {
-    return reservations.filter(reservation => reservation.day === day && reservation.roomNr === 1);
+    return reservations.filter((reservation) => reservation.day === day);
   }
 
   function notify(email, roomNr) {
@@ -55,7 +56,7 @@ const App = () => {
 
   console.log(reservations);
 
-  // The MAGIC!
+  // Formats the availabilities so that it only shows one card per person.
   function formatAvailabilities(availabilities) {
     availabilities.forEach((reservation) => {
       availabilities.forEach((r2) => {
@@ -68,12 +69,57 @@ const App = () => {
         }
       });
     });
+    availabilities = combineTimeSlots(availabilities);
+    return availabilities;
+  }
+
+  // we need a function that combines timeslots if there is overlappings:
+  function combineTimeSlots(availabilities) {
+    availabilities.forEach((aval) => {
+      let timeSlots = aval.timeSlot.split(" | ");
+      timeSlots.sort(function (a, b) {
+        if (a < b) {
+          return -1;
+        }
+        if (a > b) {
+          return 1;
+        }
+        return 0;
+      });
+      timeSlots.forEach((timeSlot, index) => {
+        timeSlots.forEach((nextTimeSlot, idx) => {
+          if (idx == index + 1) {
+            // checking if the next time slot overlaps with the previos one or not.
+            let secondStartingTime = nextTimeSlot.split(" - ")[0];
+            let secondEndingTime = nextTimeSlot.split(" - ")[1];
+            let firstEndingTime = timeSlot.split(" - ")[1];
+            let firstStartingTime = timeSlot.split(" - ")[0];
+            if (secondStartingTime < firstEndingTime) {
+              // meaning there is overlapping: (there are two types of overlapping)
+              if (secondEndingTime > firstEndingTime) {
+                // second time slot is deleted and the first time slot is updated.
+                timeSlots[index] = firstStartingTime + " - " + secondEndingTime;
+                timeSlots.splice(idx, 1);
+              } else {
+                // only the second time slot is deleted.
+                timeSlots.splice(idx, 1);
+              }
+            }
+          }
+        });
+      });
+      aval.timeSlot = timeSlots.join(" | ");
+    });
     return availabilities;
   }
 
   useEffect(() => {
     refreshReservation.onmessage = (event) => {
-      setReservation(formatAvailabilities(setAvailabilities([JSON.parse(event.data), ...reservations])));
+      setReservation(
+        formatAvailabilities(
+          setAvailabilities([JSON.parse(event.data), ...reservations])
+        )
+      );
     };
   }, [reservations]);
 
@@ -85,19 +131,24 @@ const App = () => {
           <motion.div
             key={reservation._id}
             className="reservation-card p-3 mx-auto shadow"
-            initial={{x: "100vw"}}
-            animate={{x: 0}}
-            transition={{type: "spring", stiffness: 50}}
+            initial={{ x: "100vw" }}
+            animate={{ x: 0 }}
+            transition={{ type: "spring", stiffness: 50 }}
           >
             <div className="d-flex m-2">
-              <img className="default_profile_pic" src={profile_pic}/>
+              <img className="default_profile_pic" src={profile_pic} />
               <h3 className="my-auto ml-2">{reservation.name}</h3>
             </div>
             <div className="d-flex m-2">
               <h4 className="mr-auto">{reservation.timeSlot}</h4>
             </div>
             <div className="d-flex m-2">
-              <button disabled={disable} onClick={() => notify(reservation.email, reservation.roomNr)}>Notify ?</button>
+              <button
+                disabled={disable}
+                onClick={() => notify(reservation.email, reservation.roomNr)}
+              >
+                Notify ?
+              </button>
             </div>
           </motion.div>
         );
