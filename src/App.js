@@ -73,9 +73,10 @@ const App = () => {
     return availabilities;
   }
 
-  // we need a function that combines timeslots if there is overlappings:
+  // function that combines timeslots if there is overlappings:
   function combineTimeSlots(availabilities) {
     availabilities.forEach((aval) => {
+      console.log(aval.timeSlot);
       let timeSlots = aval.timeSlot.split(" | ");
       timeSlots.sort(function (a, b) {
         if (a < b) {
@@ -86,28 +87,37 @@ const App = () => {
         }
         return 0;
       });
-      timeSlots.forEach((timeSlot, index) => {
+      console.log(timeSlots);
+      for (let i = 0; i < timeSlots.length; i++) {
+        let timeSlot = timeSlots[i];
         timeSlots.forEach((nextTimeSlot, idx) => {
-          if (idx == index + 1) {
-            // checking if the next time slot overlaps with the previos one or not.
+          console.log("idx: ", idx, " timeSlot:", nextTimeSlot);
+          if (idx == i + 1) {
+            // checking if the next time slot overlaps with the previous one or not.
             let secondStartingTime = nextTimeSlot.split(" - ")[0];
             let secondEndingTime = nextTimeSlot.split(" - ")[1];
             let firstEndingTime = timeSlot.split(" - ")[1];
             let firstStartingTime = timeSlot.split(" - ")[0];
-            if (secondStartingTime < firstEndingTime) {
+            if (secondStartingTime <= firstEndingTime) {
               // meaning there is overlapping: (there are two types of overlapping)
               if (secondEndingTime > firstEndingTime) {
                 // second time slot is deleted and the first time slot is updated.
-                timeSlots[index] = firstStartingTime + " - " + secondEndingTime;
+                timeSlots[i] = firstStartingTime + " - " + secondEndingTime;
                 timeSlots.splice(idx, 1);
+                i--;
+                console.log("if happend");
               } else {
+                console.log("else happend.");
                 // only the second time slot is deleted.
                 timeSlots.splice(idx, 1);
+                i--;
               }
             }
+            console.log(timeSlots);
           }
         });
-      });
+      }
+      console.log(timeSlots.join(" | "));
       aval.timeSlot = timeSlots.join(" | ");
     });
     return availabilities;
