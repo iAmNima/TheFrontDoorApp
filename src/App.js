@@ -30,7 +30,9 @@ const App = () => {
 
   // returns only the availabilities from all reservations.
   function setAvailabilities(reservations) {
-    return reservations.filter((reservation) => reservation.day === day);
+    return reservations.filter(
+      (reservation) => reservation.day === day && reservation.roomNr === 1
+    );
   }
 
   function notify(email, roomNr) {
