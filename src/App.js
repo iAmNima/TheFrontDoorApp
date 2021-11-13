@@ -47,7 +47,7 @@ const App = () => {
             .then((res) => {
                 console.log(res);
                 console.log("Message Sent");
-                setTimeout(() => setDisable(false), 6000);
+                setTimeout(() => setDisable(false), 60000);
                 alert("Message Sent");
             })
             .catch(() => {
