@@ -36,3 +36,14 @@ html {
     0 6px 20px 0 rgba(119, 119, 119, 0.19);
   margin-bottom: 30px;
 }
+button{
+  height: 10%;
+  border:navajowhite ;
+  background-color: transparent;
+  /* Center and scale the image nicely */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+  font-family: "Roboto Condensed", sans-serif;
+}
