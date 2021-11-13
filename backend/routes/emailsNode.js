@@ -3,24 +3,23 @@ const route = require("express").Router();
 
 // create reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
-    port: 465,               // true for 465, false for other ports
-    host: "smtp.gmail.com",
+    port: process.env.MAILPORT,
+    host: process.env.HOST,
     auth: {
-        user: 'frontdoor.inno@gmail.com',
-        pass: 'Pa$$word',
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
     },
     secure: true,
 });
 
 route.post('/send-email', (req, res) => {
     const to = req.body.to;
-    const roomNr = req.body.roomNr;
     const mailData = {
-        from: 'frontdoor.inno@gmail.com',
+        from: process.env.EMAIL,
         to: to,
-        subject: 'Notification for room: ' + roomNr?.toString(),
-        text: 'Front Door Notification',
-        html: '<b>Hey there! </b> <br> A participant wants to notify you. The participant is by the Front Door screen<br/><b>Front Door Team </b> ',
+        subject: process.env.Subject,
+        text: process.env.Text,
+        html: process.env.Html,
     };
 
     transporter.sendMail(mailData, (error, info) => {
