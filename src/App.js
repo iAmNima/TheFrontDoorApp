@@ -65,6 +65,14 @@ const App = () => {
                 if (r2 !== reservation) {
                     if (reservation.name === r2.name) {
                         let index_r2 = availabilities.indexOf(r2);
+                        if (reservation.ids) {
+                            reservation.ids.push({ id: r2._id, timeSlot: r2.timeSlot });
+                        } else {
+                            reservation.ids = [
+                                { id: reservation._id, timeSlot: reservation.timeSlot },
+                                { id: r2._id, timeSlot: r2.timeSlot }
+                            ];
+                        }
                         reservation.timeSlot += " | " + r2.timeSlot;
                         availabilities.splice(index_r2, 1);
                     }
@@ -94,7 +102,7 @@ const App = () => {
                 let timeSlot = timeSlots[i];
                 timeSlots.forEach((nextTimeSlot, idx) => {
                     console.log("idx: ", idx, " timeSlot:", nextTimeSlot);
-                    if (idx == i + 1) {
+                    if (idx === i + 1) {
                         // checking if the next time slot overlaps with the previous one or not.
                         let secondStartingTime = nextTimeSlot.split(" - ")[0];
                         let secondEndingTime = nextTimeSlot.split(" - ")[1];
@@ -127,9 +135,30 @@ const App = () => {
 
     useEffect(() => {
         refreshReservation.onmessage = (event) => {
+            const reservation = JSON.parse(event.data);
+            const updatedReservations = reservation.type === 'delete'
+                ? [...reservations
+                .map(reserv => {
+                    if (reserv.ids) {
+                        let find = reserv.ids.find(it => it.id === reservation._id);
+                        if (find) {
+                            reserv.timeSlot = reserv.timeSlot.split(' | ').filter(it => it !== find.timeSlot).join(' | ');
+                            if (reserv.ids.length === 1) {
+                                return null;
+                            }
+
+                            reserv.ids = reserv.ids.filter(it => it.id !== reservation._id);
+                            return reserv;
+                        }
+                    } else if (reserv._id === reservation._id) {
+                        return null;
+                    }
+                    return reserv;
+                })].filter(it => it !== null)
+                : [reservation, ...reservations];
             setReservation(
                 formatAvailabilities(
-                    setAvailabilities([JSON.parse(event.data), ...reservations])
+                    setAvailabilities(updatedReservations)
                 )
             );
         };
