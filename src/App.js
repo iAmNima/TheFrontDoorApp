@@ -4,6 +4,7 @@ import {motion} from "framer-motion";
 import profile_pic from "./assets/default_profile.png";
 import Bell_pic from "./assets/GreenBell.png";
 import axios from "axios";
+import moment from "moment";
 
 const refreshReservation = new EventSource(
     "http://localhost:5001/reservations/refresh"
@@ -11,13 +12,11 @@ const refreshReservation = new EventSource(
 
 const App = () => {
     //Hooks:
-    const [day, setDay] = useState("");
+    const day = moment();
     const [reservations, setReservation] = useState([]);
     const [disable, setDisable] = React.useState(false);
 
     useEffect(() => {
-        let time = new Date();
-        setDay(time.toLocaleDateString());
         // --> getting data from database when the component renders:
         axios
             .get("http://localhost:5001/reservations/")
@@ -27,12 +26,12 @@ const App = () => {
             .catch((error) => {
                 console.log(error);
             });
-    }, [day]);
+    }, []);
 
     // returns only the availabilities from all reservations.
     function setAvailabilities(reservations) {
         return reservations.filter(
-            (reservation) => reservation.day === day && reservation.roomNr === 1
+            (reservation) => reservation.day === day.format("DD.MM.YYYY") && reservation.roomNr === 1
         );
     }
 
