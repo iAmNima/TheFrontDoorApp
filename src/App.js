@@ -18,6 +18,10 @@ const App = () => {
 
     useEffect(() => {
         // --> getting data from database when the component renders:
+        loadReservations();
+    }, []);
+
+    function loadReservations() {
         axios
             .get("http://localhost:5001/reservations/")
             .then((Response) => {
@@ -26,7 +30,7 @@ const App = () => {
             .catch((error) => {
                 console.log(error);
             });
-    }, []);
+    }
 
     // returns only the availabilities from all reservations.
     function setAvailabilities(reservations) {
@@ -64,14 +68,6 @@ const App = () => {
                 if (r2 !== reservation) {
                     if (reservation.name === r2.name) {
                         let index_r2 = availabilities.indexOf(r2);
-                        if (reservation.ids) {
-                            reservation.ids.push({ id: r2._id, timeSlot: r2.timeSlot });
-                        } else {
-                            reservation.ids = [
-                                { id: reservation._id, timeSlot: reservation.timeSlot },
-                                { id: r2._id, timeSlot: r2.timeSlot }
-                            ];
-                        }
                         reservation.timeSlot += " | " + r2.timeSlot;
                         availabilities.splice(index_r2, 1);
                     }
@@ -133,34 +129,7 @@ const App = () => {
     }
 
     useEffect(() => {
-        refreshReservation.onmessage = (event) => {
-            const reservation = JSON.parse(event.data);
-            const updatedReservations = reservation.type === 'delete'
-                ? [...reservations
-                .map(reserv => {
-                    if (reserv.ids) {
-                        let find = reserv.ids.find(it => it.id === reservation._id);
-                        if (find) {
-                            reserv.timeSlot = reserv.timeSlot.split(' | ').filter(it => it !== find.timeSlot).join(' | ');
-                            if (reserv.ids.length === 1) {
-                                return null;
-                            }
-
-                            reserv.ids = reserv.ids.filter(it => it.id !== reservation._id);
-                            return reserv;
-                        }
-                    } else if (reserv._id === reservation._id) {
-                        return null;
-                    }
-                    return reserv;
-                })].filter(it => it !== null)
-                : [reservation, ...reservations];
-            setReservation(
-                formatAvailabilities(
-                    setAvailabilities(updatedReservations)
-                )
-            );
-        };
+        refreshReservation.onmessage = (event) => loadReservations();
     }, [reservations]);
 
     return (
